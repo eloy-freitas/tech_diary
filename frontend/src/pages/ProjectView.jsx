@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../api/client';
+import TaskModal from '../components/TaskModal';
 import './ProjectView.css';
 
 export default function ProjectView() {
@@ -20,6 +21,8 @@ export default function ProjectView() {
 
     // UI state
     const [expandedTasks, setExpandedTasks] = useState(new Set());
+    const [showModal, setShowModal] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
 
     useEffect(() => {
         loadInitialData();
@@ -60,8 +63,6 @@ export default function ProjectView() {
     const loadTasks = async () => {
         try {
             const allTasks = await api.getTasks();
-            // The API doesn't have a direct project filter yet, so we filter in the frontend
-            // In a real app, we'd do: await api.getProjectTasks(selectedProjectId)
             setTasks(allTasks.filter(t => t.project === selectedProjectId));
         } catch (error) {
             console.error('Failed to load tasks:', error);
@@ -77,6 +78,16 @@ export default function ProjectView() {
             console.error('Failed to delete task:', error);
             alert('Failed to delete task.');
         }
+    };
+
+    const openModal = (task = null) => {
+        setEditingTask(task);
+        setShowModal(true);
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setEditingTask(null);
     };
 
     const toggleExpand = (taskId) => {
@@ -135,9 +146,14 @@ export default function ProjectView() {
     return (
         <div className="project-view-container fade-in">
             <header className="view-header">
-                <div>
-                    <h1 className="page-title">Project Visualization</h1>
-                    <p className="page-subtitle">Chronological matrix of your achievements</p>
+                <div style={{ display: 'flex', gap: 'var(--spacing-lg)', alignItems: 'center' }}>
+                    <div>
+                        <h1 className="page-title">Project Visualization</h1>
+                        <p className="page-subtitle">Chronological matrix of your achievements</p>
+                    </div>
+                    <button className="btn btn-primary" onClick={() => openModal()}>
+                        + New Task
+                    </button>
                 </div>
 
                 <div className="project-selector-wrapper">
@@ -210,6 +226,9 @@ export default function ProjectView() {
                                                     <button onClick={() => toggleExpand(task.id)} className="btn btn-sm btn-secondary">
                                                         {expandedTasks.has(task.id) ? 'Collapse' : 'Expand'}
                                                     </button>
+                                                    <button onClick={() => openModal(task)} className="btn btn-sm btn-secondary">
+                                                        Edit
+                                                    </button>
                                                     <button onClick={() => handleDeleteTask(task.id)} className="btn btn-sm btn-danger">
                                                         Delete
                                                     </button>
@@ -242,6 +261,20 @@ export default function ProjectView() {
                     </div>
                 )}
             </div>
+
+            <TaskModal
+                show={showModal}
+                task={editingTask}
+                onClose={closeModal}
+                onSave={loadTasks}
+                projects={projects}
+                companies={companies}
+                setCompanies={setCompanies}
+                customers={customers}
+                setCustomers={setCustomers}
+                tags={tags}
+                setTags={setTags}
+            />
         </div>
     );
 }
