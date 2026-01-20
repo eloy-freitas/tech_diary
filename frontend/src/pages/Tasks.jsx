@@ -4,11 +4,21 @@ import './Tasks.css';
 
 export default function Tasks() {
     const [tasks, setTasks] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [companies, setCompanies] = useState([]);
+    const [customers, setCustomers] = useState([]);
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [expandedTask, setExpandedTask] = useState(null);
+
+    // Inline creation modals
+    const [showCompanyModal, setShowCompanyModal] = useState(false);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [newCompanyName, setNewCompanyName] = useState('');
+    const [newCustomerName, setNewCustomerName] = useState('');
+
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -18,6 +28,9 @@ export default function Tasks() {
         tags: [],
         saved_file_paths: [],
         date_of_execution: new Date().toISOString().split('T')[0],
+        project: '',
+        company: '',
+        customer: '',
     });
 
     useEffect(() => {
@@ -27,11 +40,17 @@ export default function Tasks() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [tasksData, tagsData] = await Promise.all([
+            const [tasksData, projectsData, companiesData, customersData, tagsData] = await Promise.all([
                 api.getTasks(),
+                api.getProjects(),
+                api.getCompanies(),
+                api.getCustomers(),
                 api.getTags(),
             ]);
             setTasks(tasksData);
+            setProjects(projectsData);
+            setCompanies(companiesData);
+            setCustomers(customersData);
             setTags(tagsData);
         } catch (error) {
             console.error('Failed to load data:', error);
@@ -85,6 +104,9 @@ export default function Tasks() {
                 tags: task.tags || [],
                 saved_file_paths: task.saved_file_paths || [],
                 date_of_execution: task.date_of_execution ? task.date_of_execution.split('T')[0] : new Date().toISOString().split('T')[0],
+                project: task.project || '',
+                company: task.company || '',
+                customer: task.customer || '',
             });
         } else {
             setEditingTask(null);
@@ -97,6 +119,9 @@ export default function Tasks() {
                 tags: [],
                 saved_file_paths: [],
                 date_of_execution: new Date().toISOString().split('T')[0],
+                project: '',
+                company: '',
+                customer: '',
             });
         }
         setShowModal(true);
@@ -105,6 +130,34 @@ export default function Tasks() {
     const closeModal = () => {
         setShowModal(false);
         setEditingTask(null);
+    };
+
+    const handleCreateCompany = async () => {
+        if (!newCompanyName.trim()) return;
+        try {
+            const newCompany = await api.createCompany({ name: newCompanyName.trim(), description: '' });
+            setCompanies([...companies, newCompany]);
+            setFormData({ ...formData, company: newCompany.id });
+            setNewCompanyName('');
+            setShowCompanyModal(false);
+        } catch (error) {
+            console.error('Failed to create company:', error);
+            alert('Failed to create company: ' + error.message);
+        }
+    };
+
+    const handleCreateCustomer = async () => {
+        if (!newCustomerName.trim()) return;
+        try {
+            const newCustomer = await api.createCustomer({ name: newCustomerName.trim(), description: '' });
+            setCustomers([...customers, newCustomer]);
+            setFormData({ ...formData, customer: newCustomer.id });
+            setNewCustomerName('');
+            setShowCustomerModal(false);
+        } catch (error) {
+            console.error('Failed to create customer:', error);
+            alert('Failed to create customer: ' + error.message);
+        }
     };
 
     const handleTagToggle = (tagName) => {
@@ -143,6 +196,21 @@ export default function Tasks() {
             month: 'short',
             day: 'numeric'
         });
+    };
+
+    const getProjectName = (projectId) => {
+        const project = projects.find(p => p.id === projectId);
+        return project ? project.name : null;
+    };
+
+    const getCompanyName = (companyId) => {
+        const company = companies.find(c => c.id === companyId);
+        return company ? company.name : null;
+    };
+
+    const getCustomerName = (customerId) => {
+        const customer = customers.find(c => c.id === customerId);
+        return customer ? customer.name : null;
     };
 
     if (loading) {
@@ -207,6 +275,29 @@ export default function Tasks() {
 
                             <div className="card-body">
                                 <p className="mb-2">{task.description}</p>
+
+                                {(task.project || task.company || task.customer) && (
+                                    <div className="project-meta mb-2">
+                                        {task.project && (
+                                            <div className="meta-item">
+                                                <span className="meta-label">📁 Project:</span>
+                                                <span className="meta-value">{getProjectName(task.project) || 'Unknown'}</span>
+                                            </div>
+                                        )}
+                                        {task.company && (
+                                            <div className="meta-item">
+                                                <span className="meta-label">🏢 Company:</span>
+                                                <span className="meta-value">{getCompanyName(task.company) || 'Unknown'}</span>
+                                            </div>
+                                        )}
+                                        {task.customer && (
+                                            <div className="meta-item">
+                                                <span className="meta-label">👥 Customer:</span>
+                                                <span className="meta-value">{getCustomerName(task.customer) || 'Unknown'}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {task.tags && task.tags.length > 0 && (
                                     <div className="tags-container mb-2">
@@ -313,6 +404,72 @@ export default function Tasks() {
                                     value={formData.date_of_execution}
                                     onChange={(e) => setFormData({ ...formData, date_of_execution: e.target.value })}
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Project</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.project}
+                                    onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                                >
+                                    <option value="">Select a project</option>
+                                    {projects.map((project) => (
+                                        <option key={project.id} value={project.id}>
+                                            {project.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Company</label>
+                                <div className="inline-create-field">
+                                    <select
+                                        className="form-select"
+                                        value={formData.company}
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                    >
+                                        <option value="">Select a company</option>
+                                        {companies.map((company) => (
+                                            <option key={company.id} value={company.id}>
+                                                {company.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setShowCompanyModal(true)}
+                                    >
+                                        + New
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Customer</label>
+                                <div className="inline-create-field">
+                                    <select
+                                        className="form-select"
+                                        value={formData.customer}
+                                        onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                                    >
+                                        <option value="">Select a customer</option>
+                                        {customers.map((customer) => (
+                                            <option key={customer.id} value={customer.id}>
+                                                {customer.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setShowCustomerModal(true)}
+                                    >
+                                        + New
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="form-group">
@@ -459,6 +616,68 @@ export default function Tasks() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Inline Company Creation Modal */}
+            {showCompanyModal && (
+                <div className="modal-overlay" onClick={() => setShowCompanyModal(false)}>
+                    <div className="modal modal-small" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="mb-2">Create New Company</h3>
+                        <div className="form-group">
+                            <label className="form-label">Company Name *</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={newCompanyName}
+                                onChange={(e) => setNewCompanyName(e.target.value)}
+                                placeholder="Enter company name"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="btn btn-primary" onClick={handleCreateCompany}>
+                                Create
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setShowCompanyModal(false);
+                                setNewCompanyName('');
+                            }}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Inline Customer Creation Modal */}
+            {showCustomerModal && (
+                <div className="modal-overlay" onClick={() => setShowCustomerModal(false)}>
+                    <div className="modal modal-small" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="mb-2">Create New Customer</h3>
+                        <div className="form-group">
+                            <label className="form-label">Customer Name *</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={newCustomerName}
+                                onChange={(e) => setNewCustomerName(e.target.value)}
+                                placeholder="Enter customer name"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="btn btn-primary" onClick={handleCreateCustomer}>
+                                Create
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setShowCustomerModal(false);
+                                setNewCustomerName('');
+                            }}>
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

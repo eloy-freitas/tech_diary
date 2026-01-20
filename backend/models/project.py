@@ -7,8 +7,6 @@ class ProjectBase(BaseModel):
     name: str
     description: str
     tags: List[str] = []
-    company: Optional[str] = None
-    customer: Optional[str] = None
 
 
 class ProjectCreate(ProjectBase):
@@ -28,8 +26,6 @@ class Project(ProjectBase):
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "name": "E-commerce Platform",
                 "description": "Built a scalable e-commerce platform with microservices architecture",
-                "tags": ["backend", "microservices", "python"],
-                "company": "comp-123",
-                "customer": "cust-456"
+                "tags": ["backend", "microservices", "python"]
             }
         }

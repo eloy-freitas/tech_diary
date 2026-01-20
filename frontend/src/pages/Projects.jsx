@@ -4,8 +4,6 @@ import './Projects.css';
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
-    const [companies, setCompanies] = useState([]);
-    const [customers, setCustomers] = useState([]);
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -14,8 +12,6 @@ export default function Projects() {
         name: '',
         description: '',
         tags: [],
-        company: '',
-        customer: '',
     });
 
     useEffect(() => {
@@ -25,15 +21,11 @@ export default function Projects() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [projectsData, companiesData, customersData, tagsData] = await Promise.all([
+            const [projectsData, tagsData] = await Promise.all([
                 api.getProjects(),
-                api.getCompanies(),
-                api.getCustomers(),
                 api.getTags(),
             ]);
             setProjects(projectsData);
-            setCompanies(companiesData);
-            setCustomers(customersData);
             setTags(tagsData);
         } catch (error) {
             console.error('Failed to load data:', error);
@@ -77,8 +69,6 @@ export default function Projects() {
                 name: project.name,
                 description: project.description,
                 tags: project.tags || [],
-                company: project.company || '',
-                customer: project.customer || '',
             });
         } else {
             setEditingProject(null);
@@ -86,8 +76,6 @@ export default function Projects() {
                 name: '',
                 description: '',
                 tags: [],
-                company: '',
-                customer: '',
             });
         }
         setShowModal(true);
@@ -105,16 +93,6 @@ export default function Projects() {
                 ? prev.tags.filter(t => t !== tagName)
                 : [...prev.tags, tagName]
         }));
-    };
-
-    const getCompanyName = (companyId) => {
-        const company = companies.find(c => c.id === companyId);
-        return company ? company.name : null;
-    };
-
-    const getCustomerName = (customerId) => {
-        const customer = customers.find(c => c.id === customerId);
-        return customer ? customer.name : null;
     };
 
     if (loading) {
@@ -170,23 +148,6 @@ export default function Projects() {
                             <div className="card-body">
                                 <p className="mb-2">{project.description}</p>
 
-                                {(project.company || project.customer) && (
-                                    <div className="project-meta mb-2">
-                                        {project.company && (
-                                            <div className="meta-item">
-                                                <span className="meta-label">🏢 Company:</span>
-                                                <span className="meta-value">{getCompanyName(project.company) || 'Unknown'}</span>
-                                            </div>
-                                        )}
-                                        {project.customer && (
-                                            <div className="meta-item">
-                                                <span className="meta-label">👥 Customer:</span>
-                                                <span className="meta-value">{getCustomerName(project.customer) || 'Unknown'}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
                                 {project.tags && project.tags.length > 0 && (
                                     <div className="tags-container">
                                         {project.tags.map((tag) => (
@@ -224,38 +185,6 @@ export default function Projects() {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     required
                                 />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Company</label>
-                                <select
-                                    className="form-select"
-                                    value={formData.company}
-                                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                >
-                                    <option value="">Select a company</option>
-                                    {companies.map((company) => (
-                                        <option key={company.id} value={company.id}>
-                                            {company.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Customer</label>
-                                <select
-                                    className="form-select"
-                                    value={formData.customer}
-                                    onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                                >
-                                    <option value="">Select a customer</option>
-                                    {customers.map((customer) => (
-                                        <option key={customer.id} value={customer.id}>
-                                            {customer.name}
-                                        </option>
-                                    ))}
-                                </select>
                             </div>
 
                             <div className="form-group">

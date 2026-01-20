@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
 
@@ -13,6 +13,9 @@ class TaskBase(BaseModel):
     tags: List[str] = []
     saved_file_paths: List[str] = []
     date_of_execution: str = Field(default_factory=lambda: datetime.now().isoformat())
+    project: Optional[str] = None
+    company: Optional[str] = None
+    customer: Optional[str] = None
 
 
 class TaskCreate(TaskBase):
@@ -37,6 +40,9 @@ class Task(TaskBase):
                 "cmd_commands": ["npm run test:auth", "docker-compose up"],
                 "tags": ["security", "backend"],
                 "saved_file_paths": ["/src/auth/jwt.py", "/tests/test_auth.py"],
-                "date_of_execution": "2026-01-20T10:00:00"
+                "date_of_execution": "2026-01-20T10:00:00",
+                "project": "proj-123",
+                "company": "comp-456",
+                "customer": "cust-789"
             }
         }
