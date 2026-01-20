@@ -1,0 +1,26 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Projects from './pages/Projects';
+import Tasks from './pages/Tasks';
+import Companies from './pages/Companies';
+import Customers from './pages/Customers';
+import Tags from './pages/Tags';
+import './index.css';
+
+function App() {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Projects />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/companies" element={<Companies />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/tags" element={<Tags />} />
+        </Routes>
+      </Layout>
+    </Router>
+  );
+}
+
+export default App;

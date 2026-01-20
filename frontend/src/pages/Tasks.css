@@ -1,0 +1,111 @@
+.tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.task-card {
+    transition: all var(--transition-base);
+}
+
+.task-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    margin-top: var(--spacing-xs);
+}
+
+.task-details {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.detail-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.detail-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.detail-list li {
+    padding-left: var(--spacing-md);
+    position: relative;
+}
+
+.detail-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--accent-primary);
+}
+
+.link {
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all var(--transition-base);
+}
+
+.link:hover {
+    color: var(--accent-secondary);
+    text-decoration: underline;
+}
+
+.commands-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.command {
+    display: block;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: var(--accent-primary);
+}
+
+.file-path {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+.array-field {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.array-field .form-input {
+    flex: 1;
+}
+
+.modal-large {
+    max-width: 800px;
+}
