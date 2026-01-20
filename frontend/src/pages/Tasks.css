@@ -147,3 +147,13 @@
     color: var(--text-primary);
     font-weight: 600;
 }
+
+.tags-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.tags-selector-wrapper .btn {
+    align-self: flex-start;
+}

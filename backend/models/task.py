@@ -13,7 +13,7 @@ class TaskBase(BaseModel):
     tags: List[str] = []
     saved_file_paths: List[str] = []
     date_of_execution: str = Field(default_factory=lambda: datetime.now().isoformat())
-    project: Optional[str] = None
+    project: str
     company: Optional[str] = None
     customer: Optional[str] = None
 

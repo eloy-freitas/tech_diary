@@ -16,8 +16,10 @@ export default function Tasks() {
     // Inline creation modals
     const [showCompanyModal, setShowCompanyModal] = useState(false);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [showTagModal, setShowTagModal] = useState(false);
     const [newCompanyName, setNewCompanyName] = useState('');
     const [newCustomerName, setNewCustomerName] = useState('');
+    const [newTagName, setNewTagName] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -157,6 +159,20 @@ export default function Tasks() {
         } catch (error) {
             console.error('Failed to create customer:', error);
             alert('Failed to create customer: ' + error.message);
+        }
+    };
+
+    const handleCreateTag = async () => {
+        if (!newTagName.trim()) return;
+        try {
+            const newTag = await api.createTag({ name: newTagName.trim() });
+            setTags([...tags, newTag]);
+            setFormData({ ...formData, tags: [...formData.tags, newTag.name] });
+            setNewTagName('');
+            setShowTagModal(false);
+        } catch (error) {
+            console.error('Failed to create tag:', error);
+            alert('Failed to create tag: ' + error.message);
         }
     };
 
@@ -407,11 +423,12 @@ export default function Tasks() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Project</label>
+                                <label className="form-label">Project *</label>
                                 <select
                                     className="form-select"
                                     value={formData.project}
                                     onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                                    required
                                 >
                                     <option value="">Select a project</option>
                                     {projects.map((project) => (
@@ -590,20 +607,29 @@ export default function Tasks() {
 
                             <div className="form-group">
                                 <label className="form-label">Tags</label>
-                                <div className="tags-selector">
-                                    {tags.map((tag) => (
-                                        <label key={tag.name} className="tag-checkbox">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.tags.includes(tag.name)}
-                                                onChange={() => handleTagToggle(tag.name)}
-                                            />
-                                            <span className="tag">{tag.name}</span>
-                                        </label>
-                                    ))}
-                                    {tags.length === 0 && (
-                                        <p className="text-muted text-small">No tags available. Create tags first.</p>
-                                    )}
+                                <div className="tags-selector-wrapper">
+                                    <div className="tags-selector">
+                                        {tags.map((tag) => (
+                                            <label key={tag.name} className="tag-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.tags.includes(tag.name)}
+                                                    onChange={() => handleTagToggle(tag.name)}
+                                                />
+                                                <span className="tag">{tag.name}</span>
+                                            </label>
+                                        ))}
+                                        {tags.length === 0 && (
+                                            <p className="text-muted text-small">No tags available. Create your first tag.</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setShowTagModal(true)}
+                                    >
+                                        + New Tag
+                                    </button>
                                 </div>
                             </div>
 
@@ -674,6 +700,37 @@ export default function Tasks() {
                             <button className="btn btn-secondary" onClick={() => {
                                 setShowCustomerModal(false);
                                 setNewCustomerName('');
+                            }}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Inline Tag Creation Modal */}
+            {showTagModal && (
+                <div className="modal-overlay" onClick={() => setShowTagModal(false)}>
+                    <div className="modal modal-small" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="mb-2">Create New Tag</h3>
+                        <div className="form-group">
+                            <label className="form-label">Tag Name *</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={newTagName}
+                                onChange={(e) => setNewTagName(e.target.value)}
+                                placeholder="e.g., python, backend, frontend"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="btn btn-primary" onClick={handleCreateTag}>
+                                Create
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setShowTagModal(false);
+                                setNewTagName('');
                             }}>
                                 Cancel
                             </button>
