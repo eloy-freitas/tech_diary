@@ -5,6 +5,7 @@ import Tasks from './pages/Tasks';
 import Companies from './pages/Companies';
 import Customers from './pages/Customers';
 import Tags from './pages/Tags';
+import ProjectView from './pages/ProjectView';
 import './index.css';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Projects />} />
           <Route path="/tasks" element={<Tasks />} />
+          <Route path="/project-view" element={<ProjectView />} />
           <Route path="/companies" element={<Companies />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/tags" element={<Tags />} />
