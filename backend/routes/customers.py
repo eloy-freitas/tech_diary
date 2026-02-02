@@ -1,60 +1,61 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+from sqlmodel import Session, select
+from database import get_session
 from models.customer import Customer, CustomerCreate, CustomerUpdate
-from storage.json_storage import JSONStorage
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
-storage = JSONStorage()
-
-FILENAME = "customers.json"
 
 
 @router.get("/", response_model=List[Customer])
-async def get_all_customers():
+async def get_all_customers(session: Session = Depends(get_session)):
     """Get all customers."""
-    data = storage.read_all(FILENAME)
-    return data
+    return session.exec(select(Customer)).all()
 
 
 @router.get("/{customer_id}", response_model=Customer)
-async def get_customer(customer_id: str):
+async def get_customer(customer_id: str, session: Session = Depends(get_session)):
     """Get a specific customer by ID."""
-    customer = storage.read_by_id(FILENAME, customer_id)
+    customer = session.get(Customer, customer_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     return customer
 
 
 @router.post("/", response_model=Customer, status_code=201)
-async def create_customer(customer_data: CustomerCreate):
+async def create_customer(customer_data: CustomerCreate, session: Session = Depends(get_session)):
     """Create a new customer."""
-    customer = Customer(**customer_data.model_dump())
-    created = storage.create(FILENAME, customer.model_dump())
-    return created
+    customer = Customer.model_validate(customer_data)
+    session.add(customer)
+    session.commit()
+    session.refresh(customer)
+    return customer
 
 
 @router.put("/{customer_id}", response_model=Customer)
-async def update_customer(customer_id: str, customer_data: CustomerUpdate):
+async def update_customer(customer_id: str, customer_data: CustomerUpdate, session: Session = Depends(get_session)):
     """Update an existing customer."""
-    # Check if customer exists
-    existing = storage.read_by_id(FILENAME, customer_id)
-    if not existing:
+    customer = session.get(Customer, customer_id)
+    if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
-    # Update with new data, keeping the same ID
-    updated_customer = Customer(id=customer_id, **customer_data.model_dump())
-    result = storage.update(FILENAME, customer_id, updated_customer.model_dump())
+    customer_data_dict = customer_data.model_dump(exclude_unset=True)
+    for key, value in customer_data_dict.items():
+        setattr(customer, key, value)
     
-    if not result:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    
-    return result
+    session.add(customer)
+    session.commit()
+    session.refresh(customer)
+    return customer
 
 
 @router.delete("/{customer_id}", status_code=204)
-async def delete_customer(customer_id: str):
+async def delete_customer(customer_id: str, session: Session = Depends(get_session)):
     """Delete a customer."""
-    success = storage.delete(FILENAME, customer_id)
-    if not success:
+    customer = session.get(Customer, customer_id)
+    if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+    
+    session.delete(customer)
+    session.commit()
     return None

@@ -8,10 +8,29 @@ from routes import (
     tags_router
 )
 
+from contextlib import asynccontextmanager
+from database import init_db
+from routes import (
+    projects_router,
+    tasks_router,
+    companies_router,
+    customers_router,
+    tags_router,
+    admin_router
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
 app = FastAPI(
     title="Brag Document API",
     description="API for managing projects, tasks, companies, customers, and tags for professional brag documents",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Configure CORS
@@ -29,6 +48,7 @@ app.include_router(tasks_router)
 app.include_router(companies_router)
 app.include_router(customers_router)
 app.include_router(tags_router)
+app.include_router(admin_router)
 
 
 @app.get("/")

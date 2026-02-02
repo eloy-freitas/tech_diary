@@ -1,60 +1,61 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+from sqlmodel import Session, select
+from database import get_session
 from models.task import Task, TaskCreate, TaskUpdate
-from storage.json_storage import JSONStorage
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
-storage = JSONStorage()
-
-FILENAME = "tasks.json"
 
 
 @router.get("/", response_model=List[Task])
-async def get_all_tasks():
+async def get_all_tasks(session: Session = Depends(get_session)):
     """Get all tasks."""
-    data = storage.read_all(FILENAME)
-    return data
+    return session.exec(select(Task)).all()
 
 
 @router.get("/{task_id}", response_model=Task)
-async def get_task(task_id: str):
+async def get_task(task_id: str, session: Session = Depends(get_session)):
     """Get a specific task by ID."""
-    task = storage.read_by_id(FILENAME, task_id)
+    task = session.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
 
 @router.post("/", response_model=Task, status_code=201)
-async def create_task(task_data: TaskCreate):
+async def create_task(task_data: TaskCreate, session: Session = Depends(get_session)):
     """Create a new task."""
-    task = Task(**task_data.model_dump())
-    created = storage.create(FILENAME, task.model_dump())
-    return created
+    task = Task.model_validate(task_data)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
 
 
 @router.put("/{task_id}", response_model=Task)
-async def update_task(task_id: str, task_data: TaskUpdate):
+async def update_task(task_id: str, task_data: TaskUpdate, session: Session = Depends(get_session)):
     """Update an existing task."""
-    # Check if task exists
-    existing = storage.read_by_id(FILENAME, task_id)
-    if not existing:
+    task = session.get(Task, task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
-    # Update with new data, keeping the same ID
-    updated_task = Task(id=task_id, **task_data.model_dump())
-    result = storage.update(FILENAME, task_id, updated_task.model_dump())
+    task_data_dict = task_data.model_dump(exclude_unset=True)
+    for key, value in task_data_dict.items():
+        setattr(task, key, value)
     
-    if not result:
-        raise HTTPException(status_code=404, detail="Task not found")
-    
-    return result
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
 
 
 @router.delete("/{task_id}", status_code=204)
-async def delete_task(task_id: str):
+async def delete_task(task_id: str, session: Session = Depends(get_session)):
     """Delete a task."""
-    success = storage.delete(FILENAME, task_id)
-    if not success:
+    task = session.get(Task, task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    
+    session.delete(task)
+    session.commit()
     return None

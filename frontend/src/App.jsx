@@ -6,6 +6,7 @@ import Companies from './pages/Companies';
 import Customers from './pages/Customers';
 import Tags from './pages/Tags';
 import ProjectView from './pages/ProjectView';
+import Admin from './pages/Admin';
 import './index.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/companies" element={<Companies />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/tags" element={<Tags />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </Layout>
     </Router>

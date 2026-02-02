@@ -11,6 +11,7 @@ export default function Layout({ children }) {
         { path: '/companies', label: 'Companies', icon: '🏢' },
         { path: '/customers', label: 'Customers', icon: '👥' },
         { path: '/tags', label: 'Tags', icon: '🏷️' },
+        { path: '/admin', label: 'Admin', icon: '⚙️' },
     ];
 
     return (

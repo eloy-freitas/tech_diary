@@ -1,9 +1,9 @@
-from pydantic import BaseModel, Field
+from sqlmodel import SQLModel, Field
 from typing import Optional
 from uuid import uuid4
 
 
-class CustomerBase(BaseModel):
+class CustomerBase(SQLModel):
     name: str
     description: Optional[str] = None
 
@@ -16,14 +16,14 @@ class CustomerUpdate(CustomerBase):
     pass
 
 
-class Customer(CustomerBase):
-    id: str = Field(default_factory=lambda: str(uuid4()))
+class Customer(CustomerBase, table=True):
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
 
     class Config:
         json_schema_extra = {
             "example": {
-                "id": "cust-123e4567-e89b-12d3-a456-426614174000",
-                "name": "Acme Corporation",
-                "description": "Enterprise client in the manufacturing sector"
+                "id": "cust-123",
+                "name": "Acme Corp",
+                "description": "Enterprise client"
             }
         }

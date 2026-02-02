@@ -1,12 +1,14 @@
-from pydantic import BaseModel, Field
+from sqlmodel import SQLModel, Field
 from typing import Optional, List
 from uuid import uuid4
+from sqlalchemy import Column, String
+from sqlalchemy.dialects.postgresql import ARRAY
 
 
-class ProjectBase(BaseModel):
+class ProjectBase(SQLModel):
     name: str
     description: str
-    tags: List[str] = []
+    tags: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
 
 
 class ProjectCreate(ProjectBase):
@@ -17,15 +19,15 @@ class ProjectUpdate(ProjectBase):
     pass
 
 
-class Project(ProjectBase):
-    id: str = Field(default_factory=lambda: str(uuid4()))
+class Project(ProjectBase, table=True):
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
 
     class Config:
         json_schema_extra = {
             "example": {
-                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "id": "proj-123",
                 "name": "E-commerce Platform",
-                "description": "Built a scalable e-commerce platform with microservices architecture",
-                "tags": ["backend", "microservices", "python"]
+                "description": "Built a scalable e-commerce platform",
+                "tags": ["backend", "microservices"]
             }
         }
