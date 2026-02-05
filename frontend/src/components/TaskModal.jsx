@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import api from '../api/client';
 
 export default function TaskModal({ task, show, onClose, onSave, projects, companies, setCompanies, customers, setCustomers, tags, setTags }) {
@@ -22,6 +23,22 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
         company: '',
         customer: '',
     });
+
+    const [previewMode, setPreviewMode] = useState(false);
+    const textareaRef = useRef(null);
+
+    const adjustTextareaHeight = () => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    };
+
+    useEffect(() => {
+        if (!previewMode) {
+            adjustTextareaHeight();
+        }
+    }, [formData.description, previewMode, show]);
 
     useEffect(() => {
         if (task) {
@@ -53,6 +70,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                 customer: '',
             });
         }
+        setPreviewMode(false);
     }, [task]);
 
     const handleCreateCompany = async () => {
@@ -154,7 +172,17 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
         <>
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
-                    <h2 className="mb-3">{task ? 'Edit Task' : 'New Task'}</h2>
+                    <div className="flex justify-between items-center mb-3">
+                        <h2 className="mb-0">{task ? 'Edit Task' : 'New Task'}</h2>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => setPreviewMode(!previewMode)}
+                        >
+                            {previewMode ? 'Edit Mode' : 'Preview MD'}
+                        </button>
+                    </div>
+
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label className="form-label">Name *</label>
@@ -164,17 +192,26 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
+                                disabled={previewMode}
                             />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Description *</label>
-                            <textarea
-                                className="form-textarea"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                required
-                            />
+                            {previewMode ? (
+                                <div className="form-textarea markdown-content" style={{ minHeight: '100px', overflowY: 'auto' }}>
+                                    <ReactMarkdown>{formData.description}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                <textarea
+                                    ref={textareaRef}
+                                    className="form-textarea"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    style={{ minHeight: '100px', resize: 'vertical', overflow: 'hidden' }}
+                                    required
+                                />
+                            )}
                         </div>
 
                         <div className="form-group">
@@ -184,6 +221,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 className="form-input"
                                 value={formData.date_of_execution}
                                 onChange={(e) => setFormData({ ...formData, date_of_execution: e.target.value })}
+                                disabled={previewMode}
                             />
                         </div>
 
@@ -194,6 +232,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 value={formData.project}
                                 onChange={(e) => setFormData({ ...formData, project: e.target.value })}
                                 required
+                                disabled={previewMode}
                             >
                                 <option value="">Select a project</option>
                                 {projects.map((project) => (
@@ -211,6 +250,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     className="form-select"
                                     value={formData.company}
                                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                    disabled={previewMode}
                                 >
                                     <option value="">Select a company</option>
                                     {companies.map((company) => (
@@ -223,6 +263,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     type="button"
                                     className="btn btn-sm btn-secondary"
                                     onClick={() => setShowCompanyModal(true)}
+                                    disabled={previewMode}
                                 >
                                     + New
                                 </button>
@@ -236,6 +277,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     className="form-select"
                                     value={formData.customer}
                                     onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                                    disabled={previewMode}
                                 >
                                     <option value="">Select a customer</option>
                                     {customers.map((customer) => (
@@ -248,6 +290,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     type="button"
                                     className="btn btn-sm btn-secondary"
                                     onClick={() => setShowCustomerModal(true)}
+                                    disabled={previewMode}
                                 >
                                     + New
                                 </button>
@@ -264,11 +307,13 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                         value={link}
                                         onChange={(e) => handleArrayFieldChange('pr_links', index, e.target.value)}
                                         placeholder="https://github.com/..."
+                                        disabled={previewMode}
                                     />
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-danger"
                                         onClick={() => handleRemoveArrayField('pr_links', index)}
+                                        disabled={previewMode}
                                     >
                                         Remove
                                     </button>
@@ -278,6 +323,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 type="button"
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => handleAddArrayField('pr_links')}
+                                disabled={previewMode}
                             >
                                 + Add PR Link
                             </button>
@@ -293,11 +339,13 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                         value={link}
                                         onChange={(e) => handleArrayFieldChange('important_links', index, e.target.value)}
                                         placeholder="https://..."
+                                        disabled={previewMode}
                                     />
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-danger"
                                         onClick={() => handleRemoveArrayField('important_links', index)}
+                                        disabled={previewMode}
                                     >
                                         Remove
                                     </button>
@@ -307,6 +355,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 type="button"
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => handleAddArrayField('important_links')}
+                                disabled={previewMode}
                             >
                                 + Add Link
                             </button>
@@ -322,11 +371,13 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                         value={cmd}
                                         onChange={(e) => handleArrayFieldChange('cmd_commands', index, e.target.value)}
                                         placeholder="npm run build"
+                                        disabled={previewMode}
                                     />
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-danger"
                                         onClick={() => handleRemoveArrayField('cmd_commands', index)}
+                                        disabled={previewMode}
                                     >
                                         Remove
                                     </button>
@@ -336,6 +387,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 type="button"
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => handleAddArrayField('cmd_commands')}
+                                disabled={previewMode}
                             >
                                 + Add Command
                             </button>
@@ -351,11 +403,13 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                         value={path}
                                         onChange={(e) => handleArrayFieldChange('saved_file_paths', index, e.target.value)}
                                         placeholder="/path/to/file.py"
+                                        disabled={previewMode}
                                     />
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-danger"
                                         onClick={() => handleRemoveArrayField('saved_file_paths', index)}
+                                        disabled={previewMode}
                                     >
                                         Remove
                                     </button>
@@ -365,6 +419,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                 type="button"
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => handleAddArrayField('saved_file_paths')}
+                                disabled={previewMode}
                             >
                                 + Add File Path
                             </button>
@@ -380,6 +435,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                                 type="checkbox"
                                                 checked={formData.tags.includes(tag.name)}
                                                 onChange={() => handleTagToggle(tag.name)}
+                                                disabled={previewMode}
                                             />
                                             <span className="tag">{tag.name}</span>
                                         </label>
@@ -392,6 +448,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     type="button"
                                     className="btn btn-sm btn-secondary"
                                     onClick={() => setShowTagModal(true)}
+                                    disabled={previewMode}
                                 >
                                     + New Tag
                                 </button>

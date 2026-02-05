@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import api from '../api/client';
 import TaskModal from '../components/TaskModal';
 import './Tasks.css';
@@ -146,7 +147,9 @@ export default function Tasks() {
                             </div>
 
                             <div className="card-body">
-                                <p className="mb-2">{task.description}</p>
+                                <div className="mb-2 markdown-content">
+                                    <ReactMarkdown>{task.description}</ReactMarkdown>
+                                </div>
 
                                 {(task.project || task.company || task.customer) && (
                                     <div className="project-meta mb-2">
