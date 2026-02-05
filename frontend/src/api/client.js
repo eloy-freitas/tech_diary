@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:8000/api';
 
 class APIClient {
   async request(endpoint, options = {}) {
@@ -13,16 +13,16 @@ class APIClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (response.status === 204) {
         return null;
       }
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
         throw new Error(error.detail || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
