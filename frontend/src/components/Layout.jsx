@@ -6,8 +6,8 @@ export default function Layout({ children }) {
 
     const navItems = [
         { path: '/', label: 'Projects', icon: '📁' },
-        { path: '/tasks', label: 'Tasks', icon: '✓' },
-        { path: '/project-view', label: 'Matrix View', icon: '📊' },
+        { path: '/tasks', label: 'Tasks', icon: '📋' },
+        { path: '/project-view', label: 'Project overview', icon: '🔍' },
         { path: '/companies', label: 'Companies', icon: '🏢' },
         { path: '/customers', label: 'Customers', icon: '👥' },
         { path: '/tags', label: 'Tags', icon: '🏷️' },

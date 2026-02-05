@@ -25,6 +25,8 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
 
     const [previewMode, setPreviewMode] = useState(false);
     const [showComponentHelp, setShowComponentHelp] = useState(false);
+    const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+    const [isSaving, setIsSaving] = useState(false);
     const textareaRef = useRef(null);
 
     // Helper function to get component type icon
@@ -221,8 +223,22 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
         });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    // Validation helper
+    const isFormValid = () => {
+        return formData.name.trim() !== '' && formData.date_of_execution !== '';
+    };
+
+    // Save task data and components
+    const saveTaskData = async () => {
+        if (!isFormValid()) {
+            setSaveMessage({ type: 'error', text: 'Please fill in all required fields (Name and Date)' });
+            setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+            return null;
+        }
+
+        setIsSaving(true);
+        setSaveMessage({ type: '', text: '' });
+
         try {
             const submitData = {
                 ...formData,
@@ -255,10 +271,33 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
             }
 
             onSave();
-            onClose();
+            return taskId;
         } catch (error) {
             console.error('Failed to save task:', error);
-            alert('Failed to save task: ' + error.message);
+            setSaveMessage({ type: 'error', text: 'Failed to save task: ' + error.message });
+            setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+            return null;
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Save without closing
+    const handleSave = async (e) => {
+        e.preventDefault();
+        const result = await saveTaskData();
+        if (result) {
+            setSaveMessage({ type: 'success', text: 'Task saved successfully!' });
+            setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+        }
+    };
+
+    // Save and close
+    const handleSaveAndClose = async (e) => {
+        e.preventDefault();
+        const result = await saveTaskData();
+        if (result) {
+            onClose();
         }
     };
 
@@ -272,14 +311,26 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                         <h2 className="mb-0">{task ? 'Edit Task' : 'New Task'}</h2>
                         <button
                             type="button"
-                            className="btn btn-sm btn-secondary"
+                            className="btn btn-secondary"
                             onClick={() => setPreviewMode(!previewMode)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', padding: '0.5rem' }}
+                            title={previewMode ? 'Back to Edit mode' : 'Preview markdown'}
                         >
-                            {previewMode ? 'Edit Mode' : 'Preview MD'}
+                            {previewMode ? (
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                    <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                                </svg>
+                            ) : (
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                </svg>
+                            )}
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSaveAndClose}>
                         <div className="form-group">
                             <label className="form-label">Name *</label>
                             <input
@@ -294,7 +345,7 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
 
                         {/* Reordered fields: Date, Project, Company, Customer, Tags */}
                         <div className="form-group">
-                            <label className="form-label">Date of Execution</label>
+                            <label className="form-label">Date of Execution *</label>
                             <input
                                 type="date"
                                 className="form-input"
@@ -589,20 +640,76 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                             )}
                         </div>
 
+                        {/* Success/Error Message */}
+                        {saveMessage.text && (
+                            <div style={{
+                                padding: '0.75rem',
+                                marginBottom: '1rem',
+                                borderRadius: '4px',
+                                background: saveMessage.type === 'success' ? 'var(--success-bg, #d4edda)' : 'var(--error-bg, #f8d7da)',
+                                color: saveMessage.type === 'success' ? 'var(--success-text, #155724)' : 'var(--error-text, #721c24)',
+                                border: `1px solid ${saveMessage.type === 'success' ? 'var(--success-border, #c3e6cb)' : 'var(--error-border, #f5c6cb)'}`
+                            }}>
+                                {saveMessage.text}
+                            </div>
+                        )}
+
                         <div className="flex gap-2 mt-3">
-                            <button type="submit" className="btn btn-primary">
-                                {task ? 'Update' : 'Create'}
+                            {task && (
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSave}
+                                    disabled={!isFormValid() || isSaving}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', padding: '0.5rem' }}
+                                    title={isSaving ? 'Saving...' : 'Save changes'}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z" />
+                                    </svg>
+                                </button>
+                            )}
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                                disabled={!isFormValid() || isSaving}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                title={task ? 'Save and close' : 'Create task'}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z" />
+                                </svg>
+                                {task ? 'Save & Close' : 'Create'}
                             </button>
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>
-                                Cancel
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={onClose}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', padding: '0.5rem' }}
+                                title="Cancel"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                                </svg>
                             </button>
                             <button
                                 type="button"
                                 className="btn btn-secondary"
                                 onClick={() => setPreviewMode(!previewMode)}
-                                style={{ marginLeft: 'auto' }}
+                                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', padding: '0.5rem' }}
+                                title={previewMode ? 'Back to Edit mode' : 'Preview markdown'}
                             >
-                                {previewMode ? 'Edit' : 'Preview MD'}
+                                {previewMode ? (
+                                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                        <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                                    </svg>
+                                ) : (
+                                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                    </svg>
+                                )}
                             </button>
                         </div>
                     </form>

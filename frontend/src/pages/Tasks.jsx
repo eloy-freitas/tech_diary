@@ -15,6 +15,14 @@ export default function Tasks() {
     const [editingTask, setEditingTask] = useState(null);
     const [expandedTask, setExpandedTask] = useState(null);
     const [taskComponents, setTaskComponents] = useState({});
+    const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = newest first, 'asc' = oldest first
+
+    // Sort tasks by updated_at or date_of_execution
+    const sortedTasks = [...tasks].sort((a, b) => {
+        const dateA = new Date(a.updated_at || a.date_of_execution);
+        const dateB = new Date(b.updated_at || b.date_of_execution);
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
 
     useEffect(() => {
         loadData();
@@ -120,9 +128,32 @@ export default function Tasks() {
                     <h1 className="page-title">Tasks</h1>
                     <p className="page-subtitle">Track your accomplishments and contributions</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => openModal()}>
-                    + New Task
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        title={sortOrder === 'desc' ? 'Showing newest first - click for oldest first' : 'Showing oldest first - click for newest first'}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            {sortOrder === 'desc' ? (
+                                <path d="M3.5 3.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 12.293V3.5zm4 .5a.5.5 0 0 1 0-1h1a.5.5 0 0 1 0 1h-1zm0 3a.5.5 0 0 1 0-1h3a.5.5 0 0 1 0 1h-3zm0 3a.5.5 0 0 1 0-1h5a.5.5 0 0 1 0 1h-5zM7 12.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5z" />
+                            ) : (
+                                <path d="M3.5 12.5a.5.5 0 0 1-1 0V3.707L1.354 4.854a.5.5 0 1 1-.708-.708l2-1.999.007-.007a.497.497 0 0 1 .7.006l2 2a.5.5 0 1 1-.707.708L3.5 3.707V12.5zm3.5-9a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z" />
+                            )}
+                        </svg>
+                        {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => openModal()}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem' }}
+                        title="Create new task"
+                    >
+                        <span style={{ fontSize: '1.2rem', lineHeight: '1' }}>+</span>
+                        <span style={{ fontSize: '1.1rem', lineHeight: '1' }}>📋</span>
+                    </button>
+                </div>
             </div>
 
             {tasks.length === 0 ? (
@@ -136,31 +167,46 @@ export default function Tasks() {
                 </div>
             ) : (
                 <div className="tasks-list">
-                    {tasks.map((task) => (
+                    {sortedTasks.map((task) => (
                         <div key={task.id} className="task-card card">
                             <div className="card-header">
                                 <div className="flex-col" style={{ flex: 1 }}>
                                     <h3 className="card-title mb-0">{task.name}</h3>
                                     <span className="task-date">{formatDate(task.date_of_execution)}</span>
                                 </div>
-                                <div className="flex gap-1">
+                                <div className="flex gap-1" style={{ alignItems: 'center' }}>
                                     <button
-                                        className="btn btn-sm btn-secondary"
+                                        className={`btn btn-sm ${expandedTask === task.id ? 'btn-primary' : 'btn-secondary'}`}
                                         onClick={() => handleExpandTask(task.id)}
+                                        style={{ padding: '0.3rem 0.4rem', pointerEvents: 'auto' }}
+                                        title={expandedTask === task.id ? 'Collapse details' : 'Expand details'}
                                     >
-                                        {expandedTask === task.id ? 'Collapse' : 'Expand'}
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                        </svg>
                                     </button>
                                     <button
                                         className="btn btn-sm btn-secondary"
                                         onClick={() => openModal(task)}
+                                        style={{ padding: '0.3rem 0.4rem' }}
+                                        title="Edit task"
                                     >
-                                        Edit
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                            <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                                        </svg>
                                     </button>
                                     <button
                                         className="btn btn-sm btn-danger"
                                         onClick={() => handleDelete(task.id)}
+                                        style={{ padding: '0.3rem 0.4rem' }}
+                                        title="Delete task"
                                     >
-                                        Delete
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                            <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
@@ -205,12 +251,8 @@ export default function Tasks() {
                                     <div className="task-details">
                                         {taskComponents[task.id] && taskComponents[task.id].length > 0 && (
                                             <div className="detail-section">
-                                                <h4 className="detail-title">📦 Components</h4>
                                                 {taskComponents[task.id].map((component, i) => (
-                                                    <div key={i} style={{ marginBottom: '1rem' }}>
-                                                        <div style={{ fontWeight: '500', marginBottom: '0.5rem', textTransform: 'capitalize' }}>
-                                                            {component.component_type.replace('_', ' ')}
-                                                        </div>
+                                                    <div key={i} style={{ marginBottom: '1rem', borderLeft: '2px solid var(--border-color)', paddingLeft: '0.75rem' }}>
                                                         {component.component_type === 'text_area' ? (
                                                             <div className="markdown-content" style={{ padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
                                                                 <ReactMarkdown>{component.component_value}</ReactMarkdown>
@@ -223,12 +265,10 @@ export default function Tasks() {
                                                             <code className="command" style={{ display: 'block', padding: '0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px' }}>
                                                                 {component.component_value}
                                                             </code>
-                                                        ) : component.component_type === 'code_snippet' ? (
+                                                        ) : (
                                                             <pre style={{ background: 'var(--bg-tertiary)', padding: '0.5rem', borderRadius: '4px', overflow: 'auto' }}>
                                                                 <code>{component.component_value}</code>
                                                             </pre>
-                                                        ) : (
-                                                            <span>{component.component_value}</span>
                                                         )}
                                                     </div>
                                                 ))}
