@@ -1,11 +1,17 @@
 from sqlmodel import SQLModel, Field
 from uuid import uuid4
 from typing import Optional
+from datetime import datetime
+from sqlalchemy import Column, DateTime, func
 
 class TaskComponentBase(SQLModel):
     component_type: str  # text_area, link, command, code_snippet
     component_value: str
     component_sequence: int
+    updated_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    )
 
 class TaskComponent(TaskComponentBase, table=True):
     __tablename__ = "task_components"

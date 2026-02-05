@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field
 from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY
 
 
@@ -14,6 +14,10 @@ class TaskBase(SQLModel):
     project: str
     company: Optional[str] = None
     customer: Optional[str] = None
+    updated_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    )
 
 
 class TaskCreate(TaskBase):

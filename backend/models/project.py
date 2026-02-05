@@ -1,14 +1,19 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional, List
 from uuid import uuid4
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY
+from datetime import datetime
 
 
 class ProjectBase(SQLModel):
     name: str
     description: str
     tags: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
+    updated_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    )
 
 
 class ProjectCreate(ProjectBase):

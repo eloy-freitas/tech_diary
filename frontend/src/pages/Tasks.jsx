@@ -73,11 +73,11 @@ export default function Tasks() {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
     };
 
     const getProjectName = (projectId) => {
@@ -172,7 +172,25 @@ export default function Tasks() {
                             <div className="card-header">
                                 <div className="flex-col" style={{ flex: 1 }}>
                                     <h3 className="card-title mb-0">{task.name}</h3>
-                                    <span className="task-date">{formatDate(task.date_of_execution)}</span>
+                                    <div className="task-meta-dates" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.25rem' }}>
+                                        <span className="task-date" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            Executed: {formatDate(task.date_of_execution)}
+                                        </span>
+                                        {task.updated_at && (
+                                            <span className="task-updated-date" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                                Updated: {(() => {
+                                                    const updateDate = new Date(task.updated_at);
+                                                    const day = String(updateDate.getDate()).padStart(2, '0');
+                                                    const month = String(updateDate.getMonth() + 1).padStart(2, '0');
+                                                    const year = updateDate.getFullYear();
+                                                    const hours = String(updateDate.getHours()).padStart(2, '0');
+                                                    const minutes = String(updateDate.getMinutes()).padStart(2, '0');
+                                                    const seconds = String(updateDate.getSeconds()).padStart(2, '0');
+                                                    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                                                })()}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex gap-1" style={{ alignItems: 'center' }}>
                                     <button

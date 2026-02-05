@@ -347,10 +347,32 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                         <div className="form-group">
                             <label className="form-label">Date of Execution *</label>
                             <input
-                                type="date"
+                                type="text"
                                 className="form-input"
-                                value={formData.date_of_execution}
-                                onChange={(e) => setFormData({ ...formData, date_of_execution: e.target.value })}
+                                value={(() => {
+                                    // Parse ISO date (YYYY-MM-DD or full ISO) and format as DD/MM/YYYY
+                                    if (!formData.date_of_execution) return '';
+                                    const date = new Date(formData.date_of_execution);
+                                    if (isNaN(date.getTime())) return formData.date_of_execution;
+                                    const day = String(date.getDate()).padStart(2, '0');
+                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                    const year = date.getFullYear();
+                                    return `${day}/${month}/${year}`;
+                                })()}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Handle input (simple mask or direct entry)
+                                    // For simplicity and compatibility with backend, we try to parse it
+                                    const parts = value.split('/');
+                                    if (parts.length === 3) {
+                                        const [d, m, y] = parts;
+                                        if (d.length === 2 && m.length === 2 && y.length === 4) {
+                                            const isoDate = `${y}-${m}-${d}`;
+                                            setFormData({ ...formData, date_of_execution: isoDate });
+                                        }
+                                    }
+                                }}
+                                placeholder="DD/MM/YYYY"
                                 disabled={previewMode}
                             />
                         </div>
@@ -692,6 +714,20 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                                     <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
                                 </svg>
                             </button>
+                            {task && task.updated_at && (
+                                <span className="updated-at-label" style={{ alignSelf: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    updated at: {(() => {
+                                        const updateDate = new Date(task.updated_at);
+                                        const day = String(updateDate.getDate()).padStart(2, '0');
+                                        const month = String(updateDate.getMonth() + 1).padStart(2, '0');
+                                        const year = updateDate.getFullYear();
+                                        const hours = String(updateDate.getHours()).padStart(2, '0');
+                                        const minutes = String(updateDate.getMinutes()).padStart(2, '0');
+                                        const seconds = String(updateDate.getSeconds()).padStart(2, '0');
+                                        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                                    })()}
+                                </span>
+                            )}
                             <button
                                 type="button"
                                 className="btn btn-secondary"
