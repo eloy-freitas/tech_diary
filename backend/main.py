@@ -20,6 +20,8 @@ from routes import (
     admin_router
 )
 
+from routes.task_components import router as task_components_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,6 +52,7 @@ app.include_router(companies_router)
 app.include_router(customers_router)
 app.include_router(tags_router)
 app.include_router(admin_router)
+app.include_router(task_components_router)
 
 
 @app.get("/")

@@ -14,6 +14,7 @@ export default function Tasks() {
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [expandedTask, setExpandedTask] = useState(null);
+    const [taskComponents, setTaskComponents] = useState({});
 
     useEffect(() => {
         loadData();
@@ -86,6 +87,24 @@ export default function Tasks() {
         return customer ? customer.name : null;
     };
 
+    const handleExpandTask = async (taskId) => {
+        if (expandedTask === taskId) {
+            setExpandedTask(null);
+        } else {
+            setExpandedTask(taskId);
+            // Load components for this task if not already loaded
+            if (!taskComponents[taskId]) {
+                try {
+                    const components = await api.getTaskComponents(taskId);
+                    setTaskComponents(prev => ({ ...prev, [taskId]: components }));
+                } catch (error) {
+                    console.error('Failed to load task components:', error);
+                    setTaskComponents(prev => ({ ...prev, [taskId]: [] }));
+                }
+            }
+        }
+    };
+
     if (loading) {
         return (
             <div className="page-container">
@@ -127,7 +146,7 @@ export default function Tasks() {
                                 <div className="flex gap-1">
                                     <button
                                         className="btn btn-sm btn-secondary"
-                                        onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                                        onClick={() => handleExpandTask(task.id)}
                                     >
                                         {expandedTask === task.id ? 'Collapse' : 'Expand'}
                                     </button>
@@ -184,57 +203,35 @@ export default function Tasks() {
 
                                 {expandedTask === task.id && (
                                     <div className="task-details">
-                                        {task.pr_links && task.pr_links.length > 0 && (
+                                        {taskComponents[task.id] && taskComponents[task.id].length > 0 && (
                                             <div className="detail-section">
-                                                <h4 className="detail-title">🔗 Pull Requests</h4>
-                                                <ul className="detail-list">
-                                                    {task.pr_links.map((link, i) => (
-                                                        <li key={i}>
-                                                            <a href={link} target="_blank" rel="noopener noreferrer" className="link">
-                                                                {link}
+                                                <h4 className="detail-title">📦 Components</h4>
+                                                {taskComponents[task.id].map((component, i) => (
+                                                    <div key={i} style={{ marginBottom: '1rem' }}>
+                                                        <div style={{ fontWeight: '500', marginBottom: '0.5rem', textTransform: 'capitalize' }}>
+                                                            {component.component_type.replace('_', ' ')}
+                                                        </div>
+                                                        {component.component_type === 'text_area' ? (
+                                                            <div className="markdown-content" style={{ padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
+                                                                <ReactMarkdown>{component.component_value}</ReactMarkdown>
+                                                            </div>
+                                                        ) : component.component_type === 'link' ? (
+                                                            <a href={component.component_value} target="_blank" rel="noopener noreferrer" className="link">
+                                                                {component.component_value}
                                                             </a>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {task.important_links && task.important_links.length > 0 && (
-                                            <div className="detail-section">
-                                                <h4 className="detail-title">📌 Important Links</h4>
-                                                <ul className="detail-list">
-                                                    {task.important_links.map((link, i) => (
-                                                        <li key={i}>
-                                                            <a href={link} target="_blank" rel="noopener noreferrer" className="link">
-                                                                {link}
-                                                            </a>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {task.cmd_commands && task.cmd_commands.length > 0 && (
-                                            <div className="detail-section">
-                                                <h4 className="detail-title">⌨️ Commands</h4>
-                                                <div className="commands-list">
-                                                    {task.cmd_commands.map((cmd, i) => (
-                                                        <code key={i} className="command">{cmd}</code>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {task.saved_file_paths && task.saved_file_paths.length > 0 && (
-                                            <div className="detail-section">
-                                                <h4 className="detail-title">📁 File Paths</h4>
-                                                <ul className="detail-list">
-                                                    {task.saved_file_paths.map((path, i) => (
-                                                        <li key={i}>
-                                                            <code className="file-path">{path}</code>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                                        ) : component.component_type === 'command' ? (
+                                                            <code className="command" style={{ display: 'block', padding: '0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px' }}>
+                                                                {component.component_value}
+                                                            </code>
+                                                        ) : component.component_type === 'code_snippet' ? (
+                                                            <pre style={{ background: 'var(--bg-tertiary)', padding: '0.5rem', borderRadius: '4px', overflow: 'auto' }}>
+                                                                <code>{component.component_value}</code>
+                                                            </pre>
+                                                        ) : (
+                                                            <span>{component.component_value}</span>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>

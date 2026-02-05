@@ -146,6 +146,31 @@ class APIClient {
     });
   }
 
+  // Task Components
+  async getTaskComponents(taskId) {
+    return this.request(`/tasks/${taskId}/components`);
+  }
+
+  async createTaskComponent(taskId, data) {
+    return this.request(`/tasks/${taskId}/components`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTaskComponent(taskId, componentId, data) {
+    return this.request(`/tasks/${taskId}/components/${componentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTaskComponent(taskId, componentId) {
+    return this.request(`/tasks/${taskId}/components/${componentId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Tags
   async getTags() {
     return this.request('/tags');

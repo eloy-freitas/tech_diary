@@ -9,11 +9,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 class TaskBase(SQLModel):
     name: str
     description: str
-    pr_links: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
-    important_links: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
-    cmd_commands: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
     tags: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
-    saved_file_paths: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
     date_of_execution: str = Field(default_factory=lambda: datetime.now().isoformat())
     project: str
     company: Optional[str] = None
