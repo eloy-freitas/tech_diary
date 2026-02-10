@@ -16,9 +16,14 @@ export default function Tasks() {
     const [expandedTask, setExpandedTask] = useState(null);
     const [taskComponents, setTaskComponents] = useState({});
     const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = newest first, 'asc' = oldest first
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Sort tasks by updated_at or date_of_execution
-    const sortedTasks = [...tasks].sort((a, b) => {
+    // Sort and filter tasks
+    const filteredTasks = tasks.filter(task =>
+        task.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
         const dateA = new Date(a.updated_at || a.date_of_execution);
         const dateB = new Date(b.updated_at || b.date_of_execution);
         return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
@@ -149,6 +154,35 @@ export default function Tasks() {
                     <p className="page-subtitle">Track your accomplishments and contributions</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="search-container" style={{ position: 'relative', marginRight: '0.5rem' }}>
+                        <input
+                            type="text"
+                            placeholder="Search tasks..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="form-input"
+                            style={{ paddingLeft: '2.25rem', width: '250px', marginBottom: 0 }}
+                        />
+                        <svg
+                            style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                        >
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                        </svg>
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem' }}
+                            >
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
                     <button
                         className="btn btn-secondary"
                         onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
@@ -326,6 +360,7 @@ export default function Tasks() {
                 onClose={closeModal}
                 onSave={loadData}
                 projects={projects}
+                setProjects={setProjects}
                 companies={companies}
                 setCompanies={setCompanies}
                 customers={customers}

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import api from '../api/client';
 
-export default function TaskModal({ task, show, onClose, onSave, projects, companies, setCompanies, customers, setCustomers, tags, setTags }) {
+export default function TaskModal({ task, show, onClose, onSave, projects, setProjects, companies, setCompanies, customers, setCustomers, tags, setTags }) {
+    const [showProjectModal, setShowProjectModal] = useState(false);
+    const [newProjectName, setNewProjectName] = useState('');
     const [showCompanyModal, setShowCompanyModal] = useState(false);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [showTagModal, setShowTagModal] = useState(false);
@@ -123,6 +125,20 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
         };
         loadTaskData();
     }, [task]);
+
+    const handleCreateProject = async () => {
+        if (!newProjectName.trim()) return;
+        try {
+            const newProject = await api.createProject({ name: newProjectName.trim(), description: '' });
+            setProjects([...projects, newProject]);
+            setFormData({ ...formData, project: newProject.id });
+            setNewProjectName('');
+            setShowProjectModal(false);
+        } catch (error) {
+            console.error('Failed to create project:', error);
+            alert('Failed to create project: ' + error.message);
+        }
+    };
 
     const handleCreateCompany = async () => {
         if (!newCompanyName.trim()) return;
@@ -389,20 +405,30 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
 
                         <div className="form-group">
                             <label className="form-label">Project *</label>
-                            <select
-                                className="form-select"
-                                value={formData.project}
-                                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
-                                required
-                                disabled={previewMode}
-                            >
-                                <option value="">Select a project</option>
-                                {projects.map((project) => (
-                                    <option key={project.id} value={project.id}>
-                                        {project.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="inline-create-field">
+                                <select
+                                    className="form-select"
+                                    value={formData.project}
+                                    onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                                    required
+                                    disabled={previewMode}
+                                >
+                                    <option value="">Select a project</option>
+                                    {projects.map((project) => (
+                                        <option key={project.id} value={project.id}>
+                                            {project.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-secondary"
+                                    onClick={() => setShowProjectModal(true)}
+                                    disabled={previewMode}
+                                >
+                                    + New
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group">
@@ -761,6 +787,37 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                     </form>
                 </div>
             </div>
+
+            {/* Inline Project Creation Modal */}
+            {showProjectModal && (
+                <div className="modal-overlay" onClick={() => setShowProjectModal(false)}>
+                    <div className="modal modal-small" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="mb-2">Create New Project</h3>
+                        <div className="form-group">
+                            <label className="form-label">Project Name *</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={newProjectName}
+                                onChange={(e) => setNewProjectName(e.target.value)}
+                                placeholder="Enter project name"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="btn btn-primary" onClick={handleCreateProject}>
+                                Create
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setShowProjectModal(false);
+                                setNewProjectName('');
+                            }}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Inline Company Creation Modal */}
             {showCompanyModal && (
