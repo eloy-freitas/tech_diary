@@ -270,7 +270,17 @@ export default function TaskModal({ task, show, onClose, onSave, projects, compa
                 }
             }
 
-            onSave();
+            // Await onSave to ensure the parent state is updated first
+            await onSave();
+
+            // Re-fetch components to ensure we have the correct IDs and fresh data
+            try {
+                const refreshedComponents = await api.getTaskComponents(taskId);
+                setComponents(refreshedComponents);
+            } catch (error) {
+                console.error('Failed to refresh components after save:', error);
+            }
+
             return taskId;
         } catch (error) {
             console.error('Failed to save task:', error);

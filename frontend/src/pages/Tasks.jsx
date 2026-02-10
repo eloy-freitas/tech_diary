@@ -43,6 +43,24 @@ export default function Tasks() {
             setCompanies(companiesData);
             setCustomers(customersData);
             setTags(tagsData);
+
+            // Update editingTask if it exists to ensure freshness
+            if (editingTask) {
+                const refreshedTask = tasksData.find(t => t.id === editingTask.id);
+                if (refreshedTask) {
+                    setEditingTask(refreshedTask);
+                }
+            }
+
+            // Refresh taskComponents for the expanded task if it exists
+            if (expandedTask) {
+                try {
+                    const components = await api.getTaskComponents(expandedTask);
+                    setTaskComponents(prev => ({ ...prev, [expandedTask]: components }));
+                } catch (error) {
+                    console.error('Failed to refresh task components:', error);
+                }
+            }
         } catch (error) {
             console.error('Failed to load data:', error);
             alert('Failed to load tasks. Make sure the backend is running.');
@@ -70,6 +88,8 @@ export default function Tasks() {
     const closeModal = () => {
         setShowModal(false);
         setEditingTask(null);
+        // Refresh data on close to ensure everything is up to date
+        loadData();
     };
 
     const formatDate = (dateString) => {
