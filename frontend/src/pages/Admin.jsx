@@ -27,6 +27,10 @@ const Admin = () => {
         try {
             if (format === 'json') {
                 const response = await fetch(`${API_URL}/api/admin/export?format=json`);
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: response.statusText }));
+                    throw new Error(err.detail || 'Failed to export JSON');
+                }
                 const data = await response.json();
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
@@ -36,13 +40,22 @@ const Admin = () => {
                 a.click();
             } else {
                 const response = await fetch(`${API_URL}/api/admin/export?format=sql`);
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: response.statusText }));
+                    throw new Error(err.detail || 'Failed to export SQL');
+                }
                 const data = await response.json();
+
                 // data.data contains the SQL dump string
+                if (!data.data) {
+                    throw new Error('No data received from server');
+                }
+
                 const blob = new Blob([data.data], { type: 'text/plain' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = data.filename;
+                a.download = data.filename || `backup_${Date.now()}.sql`;
                 a.click();
             }
             setMessage('Export started.');

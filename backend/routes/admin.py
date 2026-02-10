@@ -36,19 +36,26 @@ async def export_data(format: Literal["json", "sql"] = Query("json")):
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
             raise HTTPException(status_code=500, detail="DATABASE_URL not set")
+
+        # Parse DB URL or use individual env vars if set
+        # For simplicity, let's rely on standard PG env vars if available, or extract from DATABASE_URL
+        # But since we control docker-compose, let's use the explicit env vars passed to the container
+        # Note: In docker-compose, we only passed DATABASE_URL. We should probably parse it or add the others.
+        # Alternatively, we can use the PGPASSWORD env var and let pg_dump use the URL.
+        # pg_dump -d "postgres://user:pass@host:port/dbname" works.
         
-        # Use pg_dump. password needs to be in .pgpass or PGPASSWORD env
         try:
-            # Simple pg_dump execution. Assumes pg_dump is installed and accessible.
-            # Using PGPASSWORD env var injection for simplicity here (be careful in production logging)
-            env = os.environ.copy()
-            # Parse DB URL to get params would be better, but assuming standard container setup
-            env["PGPASSWORD"] = "postgres" 
+            # Use pg_dump with the full connection string
+            # This avoids manual parsing and separate env vars
+            command = ["pg_dump", "--clean", "--if-exists", db_url]
             
-            command = ["pg_dump", "-h", "db", "-U", "postgres", "-d", "tech_diary", "--clean", "--if-exists"]
-            result = subprocess.run(command, capture_output=True, text=True, env=env)
+            # PGPASSWORD might still be needed if not in URL, but standard libpq URLs usually include it.
+            # If the URL is in the form postgresql://user:password@host:port/dbname, pg_dump handles it.
+            
+            result = subprocess.run(command, capture_output=True, text=True)
             
             if result.returncode != 0:
+                print(f"pg_dump error: {result.stderr}")
                 raise Exception(result.stderr)
             
             return {"data": result.stdout, "filename": f"backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.sql"}
@@ -76,20 +83,25 @@ async def import_data(file: UploadFile = File(...), format: Literal["json", "sql
     if format == "sql":
         try:
             # Write to temp file
-            with open("/tmp/restore.sql", "wb") as f:
-                f.write(content)
+            with open("/tmp/restore.sql", "w") as f:
+                f.write(content.decode()) # decode bytes to string for writing
             
-            env = os.environ.copy()
-            env["PGPASSWORD"] = "postgres"
-            
-            command = ["psql", "-h", "db", "-U", "postgres", "-d", "tech_diary", "-f", "/tmp/restore.sql"]
-            result = subprocess.run(command, capture_output=True, text=True, env=env)
+            db_url = os.getenv("DATABASE_URL")
+            if not db_url:
+                 raise HTTPException(status_code=500, detail="DATABASE_URL not set")
+
+            # Use psql with the full connection string
+            command = ["psql", "-d", db_url, "-f", "/tmp/restore.sql"]
+            result = subprocess.run(command, capture_output=True, text=True)
             
             if result.returncode != 0:
                 raise Exception(result.stderr)
                 
             return {"message": "Database restored successfully"}
         except Exception as e:
+            # Clean up
+            if os.path.exists("/tmp/restore.sql"):
+                os.remove("/tmp/restore.sql")
             raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
             
     else:
