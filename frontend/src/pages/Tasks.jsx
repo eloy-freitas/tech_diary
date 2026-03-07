@@ -17,6 +17,7 @@ export default function Tasks() {
     const [taskComponents, setTaskComponents] = useState({});
     const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = newest first, 'asc' = oldest first
     const [searchTerm, setSearchTerm] = useState('');
+    const [exporting, setExporting] = useState(false);
 
     // Sort and filter tasks
     const filteredTasks = tasks.filter(task =>
@@ -138,6 +139,36 @@ export default function Tasks() {
         }
     };
 
+    const handleExportMarkdown = async () => {
+        try {
+            setExporting(true);
+            const markdownContent = await api.exportTasksMarkdown();
+
+            // Create a Blob from the markdown text
+            const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+
+            // Create a download link
+            const url = window.URL.createObjectURL(blob);
+            const link = window.document.createElement('a');
+            link.href = url;
+
+            // Format current date for filename
+            const dateStr = new Date().toISOString().split('T')[0];
+            link.setAttribute('download', `tasks_export_${dateStr}.md`);
+
+            // Append link, click it, and clean up
+            window.document.body.appendChild(link);
+            link.click();
+            window.document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export tasks to markdown:', error);
+            alert('Failed to export tasks: ' + error.message);
+        } finally {
+            setExporting(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="page-container">
@@ -197,6 +228,19 @@ export default function Tasks() {
                             )}
                         </svg>
                         {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
+                    </button>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleExportMarkdown}
+                        disabled={exporting}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem' }}
+                        title="Export tasks to Markdown"
+                    >
+                        {exporting ? (
+                            <span style={{ fontSize: '1.2rem', lineHeight: '1' }}>⏳</span>
+                        ) : (
+                            <span style={{ fontSize: '1.2rem', lineHeight: '1' }}>📄</span>
+                        )}
                     </button>
                     <button
                         className="btn btn-primary"

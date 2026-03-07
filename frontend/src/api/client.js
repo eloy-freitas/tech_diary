@@ -88,6 +88,20 @@ class APIClient {
     });
   }
 
+  async exportTasksMarkdown() {
+    const url = `${API_BASE_URL}/tasks/export/markdown`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.text();
+    } catch (error) {
+      console.error('API request failed for markdown export:', error);
+      throw error;
+    }
+  }
+
   // Companies
   async getCompanies() {
     return this.request('/companies');
