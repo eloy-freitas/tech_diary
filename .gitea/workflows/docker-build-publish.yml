@@ -6,9 +6,8 @@ on:
       - 'v*' # Executa a action quando uma tag for "v1.0.0", "v2.1", etc.
 
 env:
-  # Pode ser trocado pelo domínio ou IP local do seu Gitea (ex: gitea.local:3000)
-  # Ou se estiver enviando para o Docker Hub, mude para: docker.io
-  REGISTRY: notebook-server:3000
+  # Apontando para o novo registry na porta 5000
+  REGISTRY: notebook-server:5000
   
 jobs:
   build-and-push:
@@ -20,14 +19,15 @@ jobs:
 
       - name: Configurar o Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login no Container Registry (Gitea)
-        uses: docker/login-action@v3
         with:
-          registry: http://notebook-server:3000
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITEA_TOKEN }}
-          # Nota: no Gitea, secrets.GITHUB_TOKEN representa o token da própria action
+          # É preciso instruir o Buildx a aceitar esse registry sem HTTPS (HTTP)
+          config-inline: |
+            [registry."notebook-server:5000"]
+              http = true
+              insecure = true
+
+      # Como o registry oficial (imagem registry:2) vem sem autenticação por padrão,
+      # NÃO precisamos do passo de Login! Deixei ele de fora.
 
       # ----- DOCKER BACKEND ----- #
       - name: Metadados da Imagem - Backend
