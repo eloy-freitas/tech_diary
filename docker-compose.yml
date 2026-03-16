@@ -14,9 +14,7 @@ services:
       - tech-diary-network
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: notebook-server:5000/homelab/tech-diary-backend:latest
     container_name: tech_diary_backend
     volumes:
       - ./backend:/app
@@ -35,9 +33,7 @@ services:
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: notebook-server:5000/homelab/tech-diary-frontend:latest
     container_name: tech_diary_frontend
     ports:
       - "5173:5173"
