@@ -1,0 +1,68 @@
+name: Compile and Publish Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*' # Executa a action quando uma tag for "v1.0.0", "v2.1", etc.
+
+env:
+  # Apontando para o novo registry na porta 5000
+  REGISTRY: notebook-server:5000
+  
+jobs:
+  build-and-push:
+    name: Build & Push
+    runs-on: ubuntu-latest # Requer que um runner do Gitea (act_runner) esteja configurado
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar o Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # É preciso instruir o Buildx a aceitar esse registry sem HTTPS (HTTP)
+          config-inline: |
+            [registry."notebook-server:5000"]
+              http = true
+              insecure = true
+
+      # Como o registry oficial (imagem registry:2) vem sem autenticação por padrão,
+      # NÃO precisamos do passo de Login! Deixei ele de fora.
+
+      # ----- DOCKER BACKEND ----- #
+      - name: Metadados da Imagem - Backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ gitea.repository_owner }}/tech-diary-backend
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Compilar e Publicar a Imagem (Backend)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      # ----- DOCKER FRONTEND ----- #
+      - name: Metadados da Imagem - Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ gitea.repository_owner }}/tech-diary-frontend
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Compilar e Publicar a Imagem (Frontend)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}

@@ -17,7 +17,6 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
     container_name: tech_diary_backend
     environment:
       - DATABASE_URL=${DATABASE_URL}
