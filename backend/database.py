@@ -2,7 +2,7 @@ from sqlmodel import create_engine, SQLModel, Session
 import os
 from models.task_events import register_task_events
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/tech_diary")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@notebook-server:5432/tech_diary")
 
 engine = create_engine(DATABASE_URL, echo=True)
 

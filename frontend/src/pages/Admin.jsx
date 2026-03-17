@@ -4,7 +4,7 @@ const Admin = () => {
     const [importFile, setImportFile] = useState(null);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://notebook-server:8000';
 
     const handleTruncate = async () => {
         if (!window.confirm("ARE YOU SURE? This will delete ALL data!")) return;

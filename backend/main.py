@@ -39,7 +39,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("FRONTEND_URL", "http://localhost:5173").split(","),  # Frontend URLs
+    allow_origins=os.getenv("FRONTEND_URL", "http://notebook-server:5173").split(","),  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
