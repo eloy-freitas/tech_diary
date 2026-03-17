@@ -15,7 +15,8 @@ services:
     restart: always
 
   backend:
-    image: notebook-server:5000/homelab/tech-diary-backend:latest
+    build:
+      context: ./backend
     container_name: tech_diary_backend
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -33,7 +34,9 @@ services:
     restart: always
 
   frontend:
-    image: notebook-server:5000/homelab/tech-diary-frontend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: tech_diary_frontend
     ports:
       - "5173:5173"
